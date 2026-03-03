@@ -1,0 +1,109 @@
+﻿# generated: 2026-02-25
+# project: TNL-HELP
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog â†’ in-progress: Automatically when first story is created (via create-story)
+#   - in-progress â†’ done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-25
+project: TNL-HELP
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  # â”€â”€ Epic 1: Project Foundation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  epic-1: in-progress
+  1-1-initialize-repo-with-git-discipline-and-dependency-manifest: review
+  1-2-author-spec-concierge-spec-md-with-full-state-and-policy-contracts: done
+  1-3-scaffold-all-prompt-yaml-files-and-routing-config: done
+  1-4-implement-validate-config-py-with-all-10-pre-flight-checks: review
+  1-5-create-readme-adrs-and-alex-json-as-hiring-manager-facing-design-artifacts: review
+  epic-1-retrospective: optional
+
+  # â”€â”€ Epic 2: LangGraph Skeleton & CLI Entry Point â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  epic-2: in-progress
+  2-1-create-graph-init-py-state-initialization-and-graph-compilation: review
+  2-2-build-langgraph-stategraph-with-all-7-nodes-wired-as-stubs: review
+  2-3-implement-main-py-with-python-version-check-and-argument-parsing: review
+  2-4-implement-fast-mode-via-environment-variable-and-agentpolicy-model-property: review
+  epic-2-retrospective: optional
+
+  # â”€â”€ Epic 3: Dispatcher Intelligence & CLI Observability â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  epic-3: in-progress
+  3-1-implement-reset-turn-state-helper-and-stale-state-unit-test: review
+  3-2-implement-centralized-trace-function-with-field-allowlist-denylist: review
+  3-3-implement-stage-1-rule-based-pre-filter-routing: review
+  3-4-implement-stage-2-llm-based-escalation-and-intent-classification: review
+  3-5-orchestrate-full-dispatcher-both-stages-routing-decision-history-management: review
+  3-6-implement-error-handling-at-node-boundary-with-actionable-messages: review
+  3-7-implement-per-turn-data-guarantee-and-conversation-history-ownership: done
+  epic-3-retrospective: optional
+
+  # â”€â”€ Epic 4: Memory & Proactive Personalization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  epic-4: in-progress
+  4-1-implement-memory-service-profile-loader-at-session-start: review
+  4-2-implement-proactive-memory-driven-greeting-before-first-user-input: review
+  4-3-implement-session-file-write-at-session-exit: review
+  4-4-implement-fresh-session-fallback-no-profile-no-crash: review
+  4-5-implement-memory-service-trace-output-with-profile-metadata: review
+  4-6-implement-dual-store-architecture-in-session-state-plus-persisted-file: review
+  epic-4-retrospective: optional
+
+  # â”€â”€ Epic 5: Knowledge Retrieval & Blended Response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  epic-5: in-progress
+  5-1-create-mock-json-knowledge-base-with-production-swap-point-comments: review
+  5-2-implement-rag-agent-to-retrieve-from-mock-json-kb: review
+  5-3-implement-research-agent-with-duckduckgo-web-search: review
+  5-4-implement-graceful-degradation-when-web-search-unavailable: review
+  5-5-implement-response-synthesis-with-blended-output-and-inline-source-attribution: review
+  5-6-enforce-per-agent-max-tokens-output-limit-before-each-llm-call: review
+  epic-5-retrospective: optional
+
+  # â”€â”€ Epic 6: Governance, Safety & Graph Edges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  epic-6: backlog
+  6-1-implement-guardrail-node-with-confidence-threshold-check-and-clarifying-question: review
+  6-2-implement-out-of-domain-detection-and-deflection: review
+  6-3-implement-human-handoff-after-max-clarification-attempts: review
+  6-4-implement-bookingagent-stub-with-bookingagentresponse-pydantic-model: review
+  6-5-implement-follow-up-node-with-conditional-graph-edge: review
+  6-6-implement-system-summary-message-filtering-in-response-synthesis: review
+  epic-6-retrospective: optional
+
+  # â”€â”€ Epic 7: The Repo Is the Argument â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  epic-7: in-progress
+  7-1-implement-tokenbudgetmanager-stub-with-activation-threshold-comment: review
+  7-2-implement-token-limit-detection-and-turn-compression-logic-stub: review
+  7-3-create-demo-script-with-pre-validated-queries-and-expected-routing-paths: review
+  7-4-implement-new-agent-extension-validation-test-extensibility-for-fr36: review
+  7-5-implement-prompt-versioning-demonstration-extensibility-for-fr37: review
+  7-6-polish-all-layer-1-and-layer-2-artifacts-and-document-profile-reset: review
+  epic-7-retrospective: optional
