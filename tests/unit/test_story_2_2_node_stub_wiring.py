@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-
 import ast
+from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 
 from concierge.state import initialize_state
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 NODES_DIR = REPO_ROOT / "src" / "concierge" / "nodes"

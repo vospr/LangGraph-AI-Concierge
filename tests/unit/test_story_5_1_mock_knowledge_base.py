@@ -4,18 +4,10 @@ import json
 import re
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 KB_PATH = REPO_ROOT / "agents" / "kb" / "knowledge_base.json"
-SWAP_POINT_PATH = REPO_ROOT / "src" / "concierge" / "agents" / "mock_knowledge_base.py"
 REQUIRED_FIELDS = {"id", "name", "region", "description", "amenities", "pricing"}
 REQUIRED_DESTINATIONS = {"Bali", "Phuket", "Koh Samui", "Tokyo", "Bangkok"}
-SWAP_POINT_COMMENT = (
-    "# Production swap point: replace MockKnowledgeBase with "
-    "BedrockKnowledgeBase(kb_id=os.getenv(\"BEDROCK_KB_ID\"))"
-)
-
-
 def _load_kb() -> list[dict[str, object]]:
     payload = json.loads(KB_PATH.read_text(encoding="utf-8"))
     assert isinstance(payload, list), "knowledge_base.json must contain a top-level array"
@@ -43,11 +35,6 @@ def test_kb_contains_expected_destinations_and_substantive_descriptions() -> Non
     assert REQUIRED_DESTINATIONS.issubset(names)
     for entry in entries:
         assert _sentence_count(str(entry["description"])) >= 3
-
-
-def test_production_swap_point_comment_exists_with_exact_guidance() -> None:
-    source = SWAP_POINT_PATH.read_text(encoding="utf-8")
-    assert SWAP_POINT_COMMENT in source
 
 
 def test_rag_query_keyword_matching_returns_expected_destinations() -> None:

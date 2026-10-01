@@ -5,9 +5,8 @@ from pathlib import Path
 
 import yaml
 
-from concierge.state import ConciergeState
+from concierge.state import ConciergeState, StateUpdate
 from concierge.trace import trace
-
 
 CLARIFICATION_QUESTION = (
     "Of course - are you looking to research a destination, check on a booking, or something else?"
@@ -18,7 +17,8 @@ HUMAN_HANDOFF_MESSAGE = (
 )
 OUT_OF_DOMAIN_DEFLECTION_TEMPLATE = (
     "I specialize in travel planning and concierge services. "
-    "For weather, I'd suggest a weather service - but I can tell you the best time of year to visit {location} if that helps."
+    "For weather, I'd suggest a weather service - but I can tell you the best time of year "
+    "to visit {location} if that helps."
 )
 OUT_OF_DOMAIN_CONFIDENCE_MAX = 0.4
 
@@ -41,7 +41,7 @@ class GuardrailAgent:
         self._dispatcher_confidence_threshold = self._load_dispatcher_confidence_threshold()
         self._max_clarifications = self._load_guardrail_max_clarifications()
 
-    def run(self, state: ConciergeState) -> ConciergeState:
+    def run(self, state: ConciergeState) -> StateUpdate:
         if bool(state.get("human_handoff")):
             return {}
 
@@ -57,7 +57,9 @@ class GuardrailAgent:
 
         confidence = float(confidence_raw)
         if self._should_deflect_out_of_domain(state, confidence):
-            normalized_query = self._normalize_query_for_trace(str(state.get("current_input") or ""))
+            normalized_query = self._normalize_query_for_trace(
+                str(state.get("current_input") or "")
+            )
             trace(
                 "guardrail",
                 event="out_of_domain",

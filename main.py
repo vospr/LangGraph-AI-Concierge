@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import importlib
 import os
 import sys
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 from uuid import uuid4
-
 
 _MIN_PYTHON = (3, 11)
 _EXIT_COMMANDS = {"exit", "quit"}
@@ -55,7 +55,8 @@ def _load_runtime_dependencies() -> tuple[Any, Callable[..., dict[str, Any]]]:
 def _load_memory_profile(user_id: str) -> dict[str, Any] | None:
     memory_service_module = importlib.import_module("concierge.agents.memory_service")
     memory_service = memory_service_module.MemoryService()
-    return memory_service.load_profile(user_id)
+    profile: dict[str, Any] | None = memory_service.load_profile(user_id)
+    return profile
 
 
 def _emit_proactive_memory_greeting(user_id: str, profile: dict[str, Any] | None) -> None:
@@ -74,7 +75,7 @@ def _emit_proactive_memory_greeting(user_id: str, profile: dict[str, Any] | None
 
 def _iso_utc_now() -> str:
     return (
-        datetime.now(timezone.utc)
+        datetime.now(UTC)
         .replace(microsecond=0)
         .isoformat()
         .replace("+00:00", "Z")

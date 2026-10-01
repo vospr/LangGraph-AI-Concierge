@@ -6,14 +6,13 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
-from concierge.state import ConciergeState, TurnResetUpdate
-from concierge.trace import trace
 from concierge.agents.token_budget_manager import TokenBudgetManager
-
+from concierge.state import ConciergeState, StateUpdate, TurnResetUpdate
+from concierge.trace import trace
 
 LOGGER = logging.getLogger(__name__)
 
@@ -295,15 +294,14 @@ class DispatcherAgent:
             )
         return compressed_history
 
-    def run(self, state: ConciergeState) -> ConciergeState:
+    def run(self, state: ConciergeState) -> StateUpdate:
         current_input = str(state.get("current_input") or "")
         history = list(state.get("conversation_history") or [])
         history.append({"role": "user", "content": current_input})
-        update: ConciergeState = {
-            **reset_turn_state(state),
-            "conversation_history": history,
-            "current_response": None,
-        }
+        update = cast(
+            StateUpdate,
+            {**reset_turn_state(state), "conversation_history": history, "current_response": None},
+        )
 
         stage1_intent, stage1_confidence, stage1_route = self._evaluate_stage1(current_input)
         if stage1_route is not None:

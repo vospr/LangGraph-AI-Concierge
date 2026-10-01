@@ -7,9 +7,8 @@ from typing import Any
 
 import yaml
 
-from concierge.state import ConciergeState
+from concierge.state import ConciergeState, StateUpdate
 from concierge.trace import trace
-
 
 WEB_SEARCH_UNAVAILABLE_LABEL = "[WEB SEARCH UNAVAILABLE — serving from internal KB only]"
 
@@ -44,7 +43,7 @@ class ResearchAgent:
             return "claude-haiku-4-5"
         return self._research_model
 
-    def run(self, state: ConciergeState) -> ConciergeState:
+    def run(self, state: ConciergeState) -> StateUpdate:
         current_query = str(state.get("current_input") or "").strip()
         scoped_query = self._build_scoped_query(
             current_query,
@@ -191,7 +190,9 @@ class ResearchAgent:
                 parts.append(text)
         return "".join(parts)
 
-    def _apply_ranking(self, ranking_text: str, results: list[dict[str, str]]) -> list[dict[str, str]]:
+    def _apply_ranking(
+        self, ranking_text: str, results: list[dict[str, str]]
+    ) -> list[dict[str, str]]:
         try:
             parsed = json.loads(ranking_text)
         except Exception:

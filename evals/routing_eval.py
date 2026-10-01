@@ -107,7 +107,7 @@ def run_arm(rows: list[Row], *, use_llm: bool) -> dict[str, Any]:
         llm_calls += 1
         return real_stage2(text)
 
-    agent._evaluate_stage2 = counting_stage2  # type: ignore[method-assign]
+    setattr(agent, "_evaluate_stage2", counting_stage2)
 
     predicted: list[str] = []
     stage1_decided = 0
@@ -148,7 +148,9 @@ def _table(results: dict[str, dict[str, Any]]) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--llm", action="store_true", help="also run the rules+LLM arm")
-    parser.add_argument("--write", action="store_true", help="write evals/results/routing_eval.json")
+    parser.add_argument(
+        "--write", action="store_true", help="write evals/results/routing_eval.json"
+    )
     args = parser.parse_args(argv)
 
     rows = load_labels()
@@ -160,7 +162,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\nstage-1 decided {r['stage1_decided']}/{r['n']} rows without an LLM")
     if args.write:
         RESULT_PATH.parent.mkdir(exist_ok=True)
-        RESULT_PATH.write_text(json.dumps(results, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        payload = json.dumps(results, indent=2, sort_keys=True)
+        RESULT_PATH.write_text(payload + "\n", encoding="utf-8")
     return 0
 
 

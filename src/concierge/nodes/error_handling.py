@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concierge.state import StateUpdate
 
 TIMEOUT_ERROR_MESSAGE = "LLM connection timeout. Please try again."
 INVALID_API_KEY_ERROR_MESSAGE = "ANTHROPIC_API_KEY not set or invalid"
@@ -29,7 +30,7 @@ def build_node_error_message(exc: Exception) -> str:
     return GENERIC_ERROR_MESSAGE
 
 
-def build_node_error_update(exc: Exception) -> dict[str, object]:
+def build_node_error_update(exc: Exception) -> StateUpdate:
     return {
         "error": build_node_error_message(exc),
         "human_handoff": True,

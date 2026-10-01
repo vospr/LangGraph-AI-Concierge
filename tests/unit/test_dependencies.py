@@ -2,9 +2,8 @@
 Tests that pyproject.toml exists and is valid TOML with required structure.
 AC2: supports reproducible dependency management via uv.
 """
-from pathlib import Path
 import tomllib
-
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 

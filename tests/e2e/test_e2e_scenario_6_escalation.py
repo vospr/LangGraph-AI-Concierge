@@ -33,17 +33,15 @@ routes to the guardrail via the "fallback" branch.
 """
 from __future__ import annotations
 
-import os
+from pathlib import Path
 from typing import Any
 
 import pytest
 import yaml
-from pathlib import Path
 
 from concierge.agents.guardrail import CLARIFICATION_QUESTION, HUMAN_HANDOFF_MESSAGE
 from concierge.graph import compiled_graph
 from concierge.state import ConciergeState, initialize_state
-
 
 # ---------------------------------------------------------------------------
 # Constants mirrored from production code / policy files so tests are
@@ -190,8 +188,8 @@ def patch_dispatcher_low_confidence(monkeypatch: pytest.MonkeyPatch):
 @pytest.fixture()
 def suppress_trace(monkeypatch: pytest.MonkeyPatch) -> None:
     """Silence trace output to keep test logs clean."""
-    import concierge.agents.guardrail as gm
     import concierge.agents.dispatcher as dm
+    import concierge.agents.guardrail as gm
     import concierge.nodes.dispatcher_node as dn
     import concierge.nodes.guardrail_node as gn
     import concierge.nodes.synthesis_node as sn
@@ -698,8 +696,8 @@ class TestGuardrailMaxClarificationsConfig:
         """
         Boundary test: max-1 clarifications -> still asks; max -> handoff.
         """
-        from concierge.agents.guardrail import GuardrailAgent
         import concierge.agents.guardrail as guardrail_module
+        from concierge.agents.guardrail import GuardrailAgent
 
         # Silence traces
         original_trace = guardrail_module.trace

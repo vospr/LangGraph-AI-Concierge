@@ -5,7 +5,6 @@ AC2: all dependencies use == and include langgraph, anthropic, pydantic,
 """
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).parent.parent.parent
 REQUIRED_PACKAGES = ["langgraph", "anthropic", "pydantic", "duckduckgo-search", "pytest"]
 

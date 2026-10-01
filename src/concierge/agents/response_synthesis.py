@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import Any
 
 from concierge.nodes.error_handling import HUMAN_HANDOFF_SUFFIX
-from concierge.state import ConciergeState
+from concierge.state import ConciergeState, StateUpdate
 from concierge.trace import trace
 
 
 class ResponseSynthesisAgent:
-    def run(self, state: ConciergeState) -> ConciergeState:
+    def run(self, state: ConciergeState) -> StateUpdate:
         clarification_needed = bool(state.get("clarification_needed"))
         if clarification_needed:
             clarification_question = str(state.get("clarification_question") or "").strip()
@@ -32,7 +32,7 @@ class ResponseSynthesisAgent:
 
         return {"current_response": response}
 
-    def _run_success_path(self, state: ConciergeState) -> ConciergeState:
+    def _run_success_path(self, state: ConciergeState) -> StateUpdate:
         booking_message, booking_integration_point, booking_required_env_vars = (
             self._extract_booking_payload(state)
         )
@@ -145,15 +145,21 @@ class ResponseSynthesisAgent:
     ) -> str:
         context_hint = self._build_context_hint(filtered_history)
         if rag_results and research_results:
-            rag_names = self._join_display_values(rag_results, primary_key="name", fallback_key="id")
+            rag_names = self._join_display_values(
+                rag_results, primary_key="name", fallback_key="id"
+            )
             trend_title = str(research_results[0].get("title") or "current travel trends").strip()
             response = (
                 "Based on our current offerings [RAG] and latest travel trends [Web], "
                 f"the top destinations are {rag_names}. {trend_title} supports this direction."
             )
         elif rag_results:
-            rag_names = self._join_display_values(rag_results, primary_key="name", fallback_key="id")
-            response = f"Based on our internal knowledge base [RAG], top destinations include {rag_names}."
+            rag_names = self._join_display_values(
+                rag_results, primary_key="name", fallback_key="id"
+            )
+            response = (
+                f"Based on our internal knowledge base [RAG], top destinations include {rag_names}."
+            )
         else:
             web_titles = self._join_display_values(
                 research_results,

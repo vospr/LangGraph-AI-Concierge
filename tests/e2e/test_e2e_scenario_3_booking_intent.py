@@ -20,7 +20,6 @@ Coverage:
 """
 from __future__ import annotations
 
-import re
 from typing import Any
 
 import pytest
@@ -30,7 +29,6 @@ from concierge.agents.dispatcher import DispatcherAgent
 from concierge.agents.response_synthesis import ResponseSynthesisAgent
 from concierge.graph import compiled_graph
 from concierge.state import NodeName, initialize_state
-
 
 # ---------------------------------------------------------------------------
 # Constants mirrored from production code — kept here so a drift in source

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-
 from pathlib import Path
 
 import pytest
 
 from concierge.graph import compiled_graph
 from concierge.state import initialize_state
-
 
 FOLLOWUP_SUGGESTION = (
     "Based on your interest in Southeast Asia, you might also want to explore mountain retreats. "

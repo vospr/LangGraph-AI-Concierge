@@ -9,9 +9,8 @@ from typing import Any
 import yaml
 
 from concierge.agents.mock_knowledge_base import MockKnowledgeBase
-from concierge.state import ConciergeState
+from concierge.state import ConciergeState, StateUpdate
 from concierge.trace import trace
-
 
 NO_RAG_MATCH_MESSAGE = "No matching internal KB destinations found."
 _STOPWORDS = {
@@ -55,7 +54,7 @@ class RAGAgent:
             return "claude-haiku-4-5"
         return self._rag_model
 
-    def run(self, state: ConciergeState) -> ConciergeState:
+    def run(self, state: ConciergeState) -> StateUpdate:
         current_query = str(state.get("current_input") or "")
         results = _apply_query_constraints(current_query, query_mock_knowledge_base(current_query))
         ranked_results = self._rank_results_with_llm(current_query, results)
@@ -149,7 +148,9 @@ class RAGAgent:
                 parts.append(text)
         return "".join(parts)
 
-    def _apply_ranking(self, ranking_text: str, results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _apply_ranking(
+        self, ranking_text: str, results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         try:
             parsed = json.loads(ranking_text)
         except Exception:

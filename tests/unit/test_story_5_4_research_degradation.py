@@ -6,7 +6,6 @@ from concierge.agents.response_synthesis import ResponseSynthesisAgent
 from concierge.graph import compiled_graph
 from concierge.state import initialize_state
 
-
 LABEL = "[WEB SEARCH UNAVAILABLE — serving from internal KB only]"
 
 

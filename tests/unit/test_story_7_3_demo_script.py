@@ -6,7 +6,6 @@ import pytest
 
 from concierge.agents.dispatcher import DispatcherAgent
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEMO_SCRIPT_PATH = REPO_ROOT / "demo_script.md"
 

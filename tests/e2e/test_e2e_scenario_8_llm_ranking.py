@@ -29,17 +29,15 @@ Group E -- Full compiled_graph.invoke (graph-level E2E)
 """
 from __future__ import annotations
 
-from collections.abc import Callable
-
 import json
 import sys
+from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
 from concierge.state import initialize_state
-
 
 # ===========================================================================
 # Shared test data
@@ -663,5 +661,5 @@ class TestGraphLevelE2E:
         executed = result.get("_executed_nodes", [])
         expected = ["dispatcher", "research", "guardrail", "synthesis", "followup"]
         assert executed == expected, (
-            "Research route must execute exactly: {}\nGot: {}".format(expected, executed)
+            f"Research route must execute exactly: {expected}\nGot: {executed}"
         )

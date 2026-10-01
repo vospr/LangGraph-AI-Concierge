@@ -1,17 +1,31 @@
 """
 Root conftest.py — shared state factories and tmp path helpers.
-No API mocking at root level (per architecture decision: integration/conftest.py owns that).
+Network and API key are blocked for every test by the autouse `_offline` fixture.
 """
-from pathlib import Path
-import pytest
-
 from collections.abc import Callable
+from pathlib import Path
+
+import pytest
 
 from concierge.agents.dispatcher import DispatcherAgent
 from concierge.state import initialize_state
 
-
 REPO_ROOT = Path(__file__).parent.parent
+
+
+@pytest.fixture(autouse=True)
+def _offline(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No live web search and no real Anthropic key in any test.
+
+    Tests that need either stub it themselves (their monkeypatch runs after this one).
+    """
+    from concierge.agents import research_agent
+
+    def _blocked(query: str, max_results: int = 5) -> list[dict[str, object]]:
+        raise RuntimeError("network disabled in tests")
+
+    monkeypatch.setattr(research_agent, "search_duckduckgo", _blocked)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
 
 @pytest.fixture

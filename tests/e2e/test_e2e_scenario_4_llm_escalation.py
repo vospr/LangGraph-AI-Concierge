@@ -39,7 +39,6 @@ import sys
 import types
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -48,7 +47,6 @@ from concierge.agents.dispatcher import DispatcherAgent
 from concierge.agents.guardrail import CLARIFICATION_QUESTION, GuardrailAgent
 from concierge.graph import build_graph
 from concierge.state import initialize_state
-
 
 # ---------------------------------------------------------------------------
 # Constants pinned from config files so the test fails loudly if config drifts

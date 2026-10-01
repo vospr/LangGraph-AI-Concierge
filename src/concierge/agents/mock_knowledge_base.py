@@ -5,13 +5,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_KB_PATH = REPO_ROOT / "agents" / "kb" / "knowledge_base.json"
 
 
 class MockKnowledgeBase:
-    # Production swap point: replace MockKnowledgeBase with BedrockKnowledgeBase(kb_id=os.getenv("BEDROCK_KB_ID"))
+    # Production swap point: replace MockKnowledgeBase with
+    # BedrockKnowledgeBase(kb_id=os.getenv("BEDROCK_KB_ID"))
     def __init__(self, kb_path: Path | None = None) -> None:
         self._kb_path = kb_path or DEFAULT_KB_PATH
 
