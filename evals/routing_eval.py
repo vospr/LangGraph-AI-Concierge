@@ -184,7 +184,9 @@ def _table(results: dict[str, dict[str, Any]]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--llm", action="store_true", help="also run the rules+LLM arm")
+    parser.add_argument(
+        "--llm", action="store_true", help="also run the rules+LLM arm with claude-opus-4-6"
+    )
     parser.add_argument(
         "--only-model",
         metavar="MODEL",
@@ -201,12 +203,16 @@ def main(argv: list[str] | None = None) -> int:
     rows = load_labels()
     new: dict[str, dict[str, Any]] = {}
     if args.only_model:
-        arm = "rules_plus_llm_haiku" if "haiku" in args.only_model else "rules_plus_llm_other"
+        arm = {
+            "claude-opus-4-6": "rules_plus_llm",
+            "claude-haiku-4-5": "rules_plus_llm_haiku",
+        }.get(args.only_model, "rules_plus_llm_other")
         new[arm] = run_arm(rows, use_llm=True, model=args.only_model)
     else:
         new["rules_only"] = run_arm(rows, use_llm=False)
         if args.llm:
-            new["rules_plus_llm"] = run_arm(rows, use_llm=True)
+            # Pinned, not the policy default, so the committed Opus arm stays reproducible.
+            new["rules_plus_llm"] = run_arm(rows, use_llm=True, model="claude-opus-4-6")
     if args.write:
         merge_results(RESULT_PATH, new)
     results = json.loads(RESULT_PATH.read_text(encoding="utf-8")) if args.write else new

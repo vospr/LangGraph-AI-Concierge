@@ -71,7 +71,7 @@ This is a 5-day MVP demonstrating:
 
 | Agent | Normal mode | Fast mode (`--fast-mode`) |
 |---|---|---|
-| Dispatcher | claude-opus-4-6 | claude-haiku-4-5 |
+| Dispatcher | claude-haiku-4-5 | claude-haiku-4-5 |
 | Research Agent | claude-sonnet-4-6 | claude-haiku-4-5 |
 | Response Synthesis | claude-sonnet-4-6 | claude-haiku-4-5 |
 | KB Lookup agent (`rag` route) | claude-haiku-4-5 | claude-haiku-4-5 |
@@ -130,7 +130,7 @@ LangGraph-AI-Concierge/
 │   └── sessions/                   # Write-once session state (git-excluded)
 │
 ├── tests/
-│   ├── unit/                       # 194 tests
+│   ├── unit/                       # 198 tests
 │   ├── e2e/                        # 296 tests (graph runs with LLM and web search stubbed)
 │   └── integration/                # conftest only, no tests
 │
@@ -313,14 +313,14 @@ The centralized `trace()` function enforces an explicit **allowlist** (intent, c
 uv sync --extra dev
 uv run ruff check .      # lint (E, F, I, UP)
 uv run mypy              # strict, on src/, main.py, evals/, validate_config.py
-uv run pytest            # 493 tests, offline, ~3 s
+uv run pytest            # 497 tests, offline, ~3 s
 ```
 
 CI (`.github/workflows/ci.yml`) runs the same three commands on Python 3.11 and 3.12. It has not run on GitHub yet: the branch is not pushed. Both versions were run locally with the same three commands.
 
 ### Test coverage
 
-493 tests collected, 0 skipped: 194 in `tests/unit/`, 296 in `tests/e2e/` (many are parametrised, so this is far more than the 9 files), 3 in `tests/`.
+497 tests collected, 0 skipped: 198 in `tests/unit/`, 296 in `tests/e2e/` (many are parametrised, so this is far more than the 9 files), 3 in `tests/`.
 
 Every test runs offline. An autouse fixture in `tests/conftest.py` makes web search raise and removes `ANTHROPIC_API_KEY`; `tests/unit/test_suite_is_offline.py` checks both. No test calls the Claude API: LLM calls are faked where a test needs one. So the suite shows the graph, routing rules, state handling and degradation paths work; it does not measure answer quality.
 
@@ -341,8 +341,8 @@ Tests that only checked a comment's wording were deleted rather than kept to inf
 
 ```bash
 uv run python -m evals.routing_eval --write         # rules-only
-uv run python -m evals.routing_eval --llm --write   # also rules+LLM with the policy model (reads ANTHROPIC_API_KEY from the gitignored .env)
-uv run python -m evals.routing_eval --only-model claude-haiku-4-5 --write   # add a haiku arm to the results file
+uv run python -m evals.routing_eval --llm --write   # also rules+LLM with claude-opus-4-6 (reads ANTHROPIC_API_KEY from the gitignored .env)
+uv run python -m evals.routing_eval --only-model claude-haiku-4-5 --write   # run one arm and merge it into the results file
 ```
 
 | Route | Rules only | Rules + Opus 4.6 | Rules + Haiku 4.5 |
@@ -354,9 +354,10 @@ uv run python -m evals.routing_eval --only-model claude-haiku-4-5 --write   # ad
 | **Overall** | **52% (21/40)** | **62% (25/40)** | **65% (26/40)** |
 
 - LLM stage, one run per model on the same 40 rows (the rules decide 12; the LLM sees the other 28):
-  - `claude-opus-4-6` (the model in `prompts/dispatcher/policy.yaml`; ID still valid): 28 calls, 4,411 input / 621 output tokens, about $0.038 at list price.
-  - `claude-haiku-4-5` (run with `--only-model`): 28 calls, 4,383 input / 1,425 output tokens, about $0.012.
+  - `claude-opus-4-6` (ID still valid; selectable by setting `model` in `prompts/dispatcher/policy.yaml`): 28 calls, 4,411 input / 621 output tokens, about $0.038 at list price.
+  - `claude-haiku-4-5` (now the router default in `prompts/dispatcher/policy.yaml`): 28 calls, 4,383 input / 1,425 output tokens, about $0.012.
   - Haiku scores one row higher (a `rag` row) at about a third of the cost. One row on one run is noise, so read it as "no measurable gain from the bigger model on this set", not "Haiku is better".
+- **Router default:** the dispatcher now uses `claude-haiku-4-5`. On this set it matched Opus 4.6 (65% vs 62%, one row) at about a third of the cost; that is one run on 40 rows, so the reason for the switch is "no measurable gain from the bigger model", not "Haiku is better". To go back, set `model: claude-opus-4-6` in `prompts/dispatcher/policy.yaml`; nothing else changes (`tests/unit/test_dispatcher_model_default.py`).
 - `fallback` is 100% in every arm because a turn nobody decides falls through to it, which says nothing about the LLM.
 - With either LLM on, 7 of 10 `research` and 5 of 11 `rag` utterances still end in `fallback` (see `confusion` in the JSON). Why was not investigated, and the rules and the 0.75 confidence threshold have not been tuned against this set.
 - Limits: 40 rows labelled in one pass, one run per model, no repeat to measure LLM variance, and no check for overlap between the utterances and the dispatcher's prompt examples. Treat the gap between rules-only and rules+LLM as indicative, not a benchmark.

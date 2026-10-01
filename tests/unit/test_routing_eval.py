@@ -195,3 +195,19 @@ def test_committed_result_has_all_three_arms_with_logged_usage() -> None:
     assert data["rules_plus_llm_haiku"]["model"] == "claude-haiku-4-5"
     for arm in ("rules_plus_llm", "rules_plus_llm_haiku"):
         assert data[arm]["llm_calls"] > 0 and data[arm]["usage"]["cost_usd"] > 0
+
+
+def test_llm_flag_is_pinned_to_opus_regardless_of_the_policy_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: list[tuple[bool, str | None]] = []
+
+    def _fake_run_arm(rows: Any, *, use_llm: bool, model: str | None = None) -> dict[str, Any]:
+        seen.append((use_llm, model))
+        return {"stage1_decided": 0, "n": 0, "per_route": {}, "overall_accuracy": 0}
+
+    monkeypatch.setattr(ev, "load_env", lambda *a, **k: None)
+    monkeypatch.setattr(ev, "run_arm", _fake_run_arm)
+    monkeypatch.setattr(ev, "_table", lambda r: "")
+    ev.main(["--llm"])
+    assert (True, "claude-opus-4-6") in seen

@@ -215,8 +215,8 @@ class TestStage2LLMEscalation:
 
         kwargs = self._recorder["last_kwargs"]
         assert kwargs is not None
-        # model must match dispatcher/policy.yaml (claude-opus-4-6 when FAST_MODE is off)
-        assert kwargs["model"] == "claude-opus-4-6", (
+        # model must match dispatcher/policy.yaml (claude-haiku-4-5)
+        assert kwargs["model"] == "claude-haiku-4-5", (
             f"Stage 2 must use dispatcher model, got {kwargs['model']!r}"
         )
         # max_tokens must match dispatcher/policy.yaml

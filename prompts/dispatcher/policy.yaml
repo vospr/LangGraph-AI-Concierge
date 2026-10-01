@@ -1,5 +1,5 @@
 agent_name: dispatcher
-model: claude-opus-4-6
+model: claude-haiku-4-5
 prompt_version: v1
 max_tokens: 128
 confidence_threshold: 0.75
