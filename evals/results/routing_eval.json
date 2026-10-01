@@ -1,0 +1,50 @@
+{
+  "rules_only": {
+    "arm": "rules_only",
+    "confusion": {
+      "booking_stub": {
+        "booking_stub": 6,
+        "fallback": 2,
+        "rag": 1
+      },
+      "fallback": {
+        "fallback": 10
+      },
+      "rag": {
+        "fallback": 9,
+        "rag": 2
+      },
+      "research": {
+        "fallback": 7,
+        "research": 3
+      }
+    },
+    "llm_calls": 0,
+    "model": null,
+    "n": 40,
+    "overall_accuracy": 0.525,
+    "per_route": {
+      "booking_stub": {
+        "accuracy": 0.6667,
+        "correct": 6,
+        "n": 9
+      },
+      "fallback": {
+        "accuracy": 1.0,
+        "correct": 10,
+        "n": 10
+      },
+      "rag": {
+        "accuracy": 0.1818,
+        "correct": 2,
+        "n": 11
+      },
+      "research": {
+        "accuracy": 0.3,
+        "correct": 3,
+        "n": 10
+      }
+    },
+    "stage1_decided": 12
+  }
+}
