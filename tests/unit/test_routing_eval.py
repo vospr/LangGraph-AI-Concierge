@@ -149,3 +149,49 @@ def test_result_file_and_report_never_contain_a_key(
     blob = json.dumps(results) + ev._table(results)
     assert secret not in blob and "sk-ant" not in blob
     assert "sk-ant" not in json.dumps(json.loads(ev.RESULT_PATH.read_text(encoding="utf-8")))
+
+
+def test_model_override_is_sent_to_the_api_and_priced_at_that_models_rate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy")
+    sent: list[str] = []
+
+    class _Messages:
+        def create(self, **kwargs: Any) -> Any:
+            sent.append(kwargs["model"])
+            block = SimpleNamespace(text='{"intent":"out_of_domain","confidence":0.9}')
+            return SimpleNamespace(
+                content=[block], usage=SimpleNamespace(input_tokens=1000, output_tokens=10)
+            )
+
+    fake = ModuleType("anthropic")
+    fake.Anthropic = lambda *a, **k: SimpleNamespace(messages=_Messages())  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "anthropic", fake)
+
+    result = ev.run_arm(ev.load_labels(), use_llm=True, model="claude-haiku-4-5")
+    assert set(sent) == {"claude-haiku-4-5"}
+    assert result["model"] == "claude-haiku-4-5"
+    n = result["llm_calls"]
+    assert result["usage"]["cost_usd"] == pytest.approx((1000 * n * 1.0 + 10 * n * 5.0) / 1e6, abs=1e-6)
+
+
+def test_writing_one_arm_keeps_the_other_arms_in_the_results_file(tmp_path: Any) -> None:
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps({"rules_only": {"x": 1}, "rules_plus_llm": {"x": 2}}))
+    ev.merge_results(path, {"rules_plus_llm_haiku": {"x": 3}})
+    data = json.loads(path.read_text())
+    assert data == {
+        "rules_only": {"x": 1},
+        "rules_plus_llm": {"x": 2},
+        "rules_plus_llm_haiku": {"x": 3},
+    }
+
+
+def test_committed_result_has_all_three_arms_with_logged_usage() -> None:
+    data = json.loads(ev.RESULT_PATH.read_text(encoding="utf-8"))
+    assert set(data) == {"rules_only", "rules_plus_llm", "rules_plus_llm_haiku"}
+    assert data["rules_plus_llm"]["model"] == "claude-opus-4-6"
+    assert data["rules_plus_llm_haiku"]["model"] == "claude-haiku-4-5"
+    for arm in ("rules_plus_llm", "rules_plus_llm_haiku"):
+        assert data[arm]["llm_calls"] > 0 and data[arm]["usage"]["cost_usd"] > 0

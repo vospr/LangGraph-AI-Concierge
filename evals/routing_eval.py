@@ -106,11 +106,13 @@ def _quiet_trace() -> Iterator[None]:
         trace_module._trace_writer = saved
 
 
-def run_arm(rows: list[Row], *, use_llm: bool) -> dict[str, Any]:
+def run_arm(rows: list[Row], *, use_llm: bool, model: str | None = None) -> dict[str, Any]:
     if use_llm and not os.environ.get("ANTHROPIC_API_KEY", "").strip():
         raise LlmUnavailable("ANTHROPIC_API_KEY is not set; cannot run the rules+LLM arm")
 
     agent = DispatcherAgent()
+    if model is not None:
+        agent._dispatcher_model = model
     llm_calls = 0
     real_stage2 = agent._evaluate_stage2
 
@@ -156,9 +158,17 @@ def run_arm(rows: list[Row], *, use_llm: bool) -> dict[str, Any]:
     return result
 
 
+def merge_results(path: Path, new: dict[str, Any]) -> None:
+    old = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    old.update(new)
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps(old, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def _table(results: dict[str, dict[str, Any]]) -> str:
-    arms = list(results)
-    lines = ["route".ljust(14) + "".join(a.ljust(18) for a in arms)]
+    order = ("rules_only", "rules_plus_llm", "rules_plus_llm_haiku")
+    arms = [a for a in order if a in results] or list(results)
+    lines = ["route".ljust(14) + "".join(a.ljust(22) for a in arms)]
     for route in (*ROUTES, "overall"):
         cells = []
         for a in arms:
@@ -168,7 +178,7 @@ def _table(results: dict[str, dict[str, Any]]) -> str:
             else:
                 pr = r["per_route"][route]
                 cells.append(f"{pr['accuracy']:.0%} ({pr['correct']}/{pr['n']})")
-        lines.append(route.ljust(14) + "".join(c.ljust(18) for c in cells))
+        lines.append(route.ljust(14) + "".join(c.ljust(22) for c in cells))
     return "\n".join(lines)
 
 
@@ -176,31 +186,41 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--llm", action="store_true", help="also run the rules+LLM arm")
     parser.add_argument(
+        "--only-model",
+        metavar="MODEL",
+        help="run just one extra rules+LLM arm with MODEL (e.g. claude-haiku-4-5); "
+        "with --write it is merged into the existing results file",
+    )
+    parser.add_argument(
         "--write", action="store_true", help="write evals/results/routing_eval.json"
     )
     args = parser.parse_args(argv)
 
-    if args.llm:
+    if args.llm or args.only_model:
         load_env()
     rows = load_labels()
-    results = {"rules_only": run_arm(rows, use_llm=False)}
-    if args.llm:
-        results["rules_plus_llm"] = run_arm(rows, use_llm=True)
-    print(_table(results))
-    r = results["rules_only"]
-    if "rules_plus_llm" in results:
-        r2 = results["rules_plus_llm"]
-        u = r2["usage"]
-        print(
-            f"\nLLM stage: model={r2['model']} calls={r2['llm_calls']} "
-            f"input_tokens={u['input_tokens']} output_tokens={u['output_tokens']} "
-            f"cost=${u['cost_usd']:.4f}"
-        )
-    print(f"\nstage-1 decided {r['stage1_decided']}/{r['n']} rows without an LLM")
+    new: dict[str, dict[str, Any]] = {}
+    if args.only_model:
+        arm = "rules_plus_llm_haiku" if "haiku" in args.only_model else "rules_plus_llm_other"
+        new[arm] = run_arm(rows, use_llm=True, model=args.only_model)
+    else:
+        new["rules_only"] = run_arm(rows, use_llm=False)
+        if args.llm:
+            new["rules_plus_llm"] = run_arm(rows, use_llm=True)
     if args.write:
-        RESULT_PATH.parent.mkdir(exist_ok=True)
-        payload = json.dumps(results, indent=2, sort_keys=True)
-        RESULT_PATH.write_text(payload + "\n", encoding="utf-8")
+        merge_results(RESULT_PATH, new)
+    results = json.loads(RESULT_PATH.read_text(encoding="utf-8")) if args.write else new
+    print(_table(results))
+    for arm, r in results.items():
+        if "usage" in r:
+            u = r["usage"]
+            print(
+                f"\n{arm}: model={r['model']} calls={r['llm_calls']} "
+                f"input_tokens={u['input_tokens']} output_tokens={u['output_tokens']} "
+                f"cost=${u['cost_usd']:.4f}"
+            )
+    first = next(iter(results.values()))
+    print(f"\nstage-1 decided {first['stage1_decided']}/{first['n']} rows without an LLM")
     return 0
 
 

@@ -38,7 +38,7 @@ def test_readme_test_counts_match_collection() -> None:
 
 def test_readme_eval_table_matches_committed_result() -> None:
     data = json.loads(ev.RESULT_PATH.read_text(encoding="utf-8"))
-    for arm, col in (("rules_only", 1), ("rules_plus_llm", 2)):
+    for arm, col in (("rules_only", 1), ("rules_plus_llm", 2), ("rules_plus_llm_haiku", 3)):
         for route, r in data[arm]["per_route"].items():
             row = next(line for line in README.splitlines() if line.startswith(f"| `{route}`"))
             cell = row.split("|")[col + 1].strip()
@@ -47,9 +47,10 @@ def test_readme_eval_table_matches_committed_result() -> None:
         cell = overall.split("|")[col + 1].strip("* ")
         n_ok = round(data[arm]["overall_accuracy"] * data[arm]["n"])
         assert cell == f"{data[arm]['overall_accuracy']:.0%} ({n_ok}/{data[arm]['n']})"
-    u = data["rules_plus_llm"]["usage"]
-    assert f"{u['input_tokens']:,} input and {u['output_tokens']:,} output tokens" in README
-    assert f"{data['rules_plus_llm']['llm_calls']} calls" in README
+    for arm in ("rules_plus_llm", "rules_plus_llm_haiku"):
+        u = data[arm]["usage"]
+        assert f"{u['input_tokens']:,} input / {u['output_tokens']:,} output tokens" in README
+        assert f"${u['cost_usd']:.3f}" in README
 
 
 def test_readme_kb_claim_matches_the_knowledge_base() -> None:
