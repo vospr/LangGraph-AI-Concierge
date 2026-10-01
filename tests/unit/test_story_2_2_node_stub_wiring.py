@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import ast
 from copy import deepcopy
 from pathlib import Path
@@ -59,7 +61,7 @@ def test_compiled_graph_exports_without_errors() -> None:
     assert hasattr(compiled_graph, "invoke")
 
 
-def test_stub_graph_sequence_for_rag_route_and_turn_id_preserved() -> None:
+def test_stub_graph_sequence_for_rag_route_and_turn_id_preserved(force_route: Callable[[str], None]) -> None:
     from concierge.graph import compiled_graph
 
     state = initialize_state(
@@ -68,7 +70,7 @@ def test_stub_graph_sequence_for_rag_route_and_turn_id_preserved() -> None:
         current_input="hello",
         turn_id=7,
     )
-    state["route"] = "rag"
+    force_route("rag")
     before = deepcopy(state)
 
     result = compiled_graph.invoke(state)
@@ -84,11 +86,11 @@ def test_stub_graph_sequence_for_rag_route_and_turn_id_preserved() -> None:
     ]
 
 
-def test_stub_graph_sequence_for_research_and_booking_routes() -> None:
+def test_stub_graph_sequence_for_research_and_booking_routes(force_route: Callable[[str], None]) -> None:
     from concierge.graph import compiled_graph
 
     research = initialize_state("alex", "session-2-2-research", "hello", turn_id=11)
-    research["route"] = "research"
+    force_route("research")
     research_result = compiled_graph.invoke(research)
     assert research_result.get("_executed_nodes") == [
         "dispatcher",
@@ -100,7 +102,7 @@ def test_stub_graph_sequence_for_research_and_booking_routes() -> None:
     assert research_result["turn_id"] == 11
 
     booking = initialize_state("alex", "session-2-2-booking", "hello", turn_id=13)
-    booking["route"] = "booking_stub"
+    force_route("booking_stub")
     booking_result = compiled_graph.invoke(booking)
     assert booking_result.get("_executed_nodes") == [
         "dispatcher",
@@ -111,11 +113,11 @@ def test_stub_graph_sequence_for_research_and_booking_routes() -> None:
     assert booking_result["turn_id"] == 13
 
 
-def test_stub_agents_keep_core_state_fields_unchanged() -> None:
+def test_stub_agents_keep_core_state_fields_unchanged(force_route: Callable[[str], None]) -> None:
     from concierge.graph import compiled_graph
 
     state = initialize_state("alex", "session-2-2-unchanged", "hello", turn_id=2)
-    state["route"] = "research"
+    force_route("research")
     state["memory_profile"] = {"preferred_name": "Alex"}
     state["conversation_history"] = [{"role": "user", "content": "hello"}]
 
@@ -124,7 +126,11 @@ def test_stub_agents_keep_core_state_fields_unchanged() -> None:
     assert result["user_id"] == state["user_id"]
     assert result["session_id"] == state["session_id"]
     assert result["memory_profile"] == state["memory_profile"]
-    assert result["conversation_history"] == state["conversation_history"]
+    # the dispatcher appends the current user message to the history each turn
+    assert result["conversation_history"] == [
+        *state["conversation_history"],
+        {"role": "user", "content": state["current_input"]},
+    ]
     assert result["current_input"] == state["current_input"]
     assert result["rag_results"] == state["rag_results"]
     assert result["research_results"] is None or isinstance(result["research_results"], list)

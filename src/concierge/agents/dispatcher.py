@@ -296,10 +296,6 @@ class DispatcherAgent:
         return compressed_history
 
     def run(self, state: ConciergeState) -> ConciergeState:
-        existing_route = state.get("route")
-        if isinstance(existing_route, str) and existing_route.strip():
-            return {}
-
         current_input = str(state.get("current_input") or "")
         history = list(state.get("conversation_history") or [])
         history.append({"role": "user", "content": current_input})

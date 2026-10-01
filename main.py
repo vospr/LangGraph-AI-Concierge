@@ -131,6 +131,9 @@ def _run_loop(
         if isinstance(result, dict):
             state.clear()
             state.update(result)
+            response = str(state.get("current_response") or "").strip()
+            if response:
+                print(response)
 
 
 def main(argv: list[str] | None = None, input_reader: Callable[[str], str] = input) -> int:

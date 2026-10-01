@@ -29,6 +29,8 @@ Group E -- Full compiled_graph.invoke (graph-level E2E)
 """
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import json
 import sys
 from types import SimpleNamespace
@@ -583,15 +585,13 @@ class TestGraphLevelE2E:
         monkeypatch.setattr(m, "search_duckduckgo", _fake_ddg)
         monkeypatch.setitem(sys.modules, "anthropic", anthropic_mod)
 
-    def test_graph_success_path_reorders_top_result(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_graph_success_path_reorders_top_result(self, monkeypatch: pytest.MonkeyPatch, force_route: Callable[[str], None]) -> None:
         from concierge.graph import compiled_graph
 
         self._setup_graph(monkeypatch, "graph-8a", _success_anthropic(_LLM_INDICES))
 
         state = _make_state("e2e-8-graph-ok")
-        state["route"] = "research"
+        force_route("research")
         state["rag_results"] = []
 
         result = compiled_graph.invoke(state)
@@ -604,29 +604,25 @@ class TestGraphLevelE2E:
         )
         assert rr == _EXPECTED
 
-    def test_graph_success_path_research_node_in_executed_nodes(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_graph_success_path_research_node_in_executed_nodes(self, monkeypatch: pytest.MonkeyPatch, force_route: Callable[[str], None]) -> None:
         from concierge.graph import compiled_graph
 
         self._setup_graph(monkeypatch, "graph-8a-node", _success_anthropic(_LLM_INDICES))
 
         state = _make_state("e2e-8-graph-node")
-        state["route"] = "research"
+        force_route("research")
         state["rag_results"] = []
 
         result = compiled_graph.invoke(state)
         assert "research" in (result.get("_executed_nodes") or [])
 
-    def test_graph_failure_path_preserves_original_ddg_order(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_graph_failure_path_preserves_original_ddg_order(self, monkeypatch: pytest.MonkeyPatch, force_route: Callable[[str], None]) -> None:
         from concierge.graph import compiled_graph
 
         self._setup_graph(monkeypatch, "graph-8b", _failing_anthropic())
 
         state = _make_state("e2e-8-graph-fail")
-        state["route"] = "research"
+        force_route("research")
         state["rag_results"] = []
 
         result = compiled_graph.invoke(state)
@@ -638,15 +634,13 @@ class TestGraphLevelE2E:
             "On LLM failure the graph must return results in original DDG order"
         )
 
-    def test_graph_failure_path_no_error_state_set(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_graph_failure_path_no_error_state_set(self, monkeypatch: pytest.MonkeyPatch, force_route: Callable[[str], None]) -> None:
         from concierge.graph import compiled_graph
 
         self._setup_graph(monkeypatch, "graph-8b-nocrash", _failing_anthropic())
 
         state = _make_state("e2e-8-graph-nocrash")
-        state["route"] = "research"
+        force_route("research")
         state["rag_results"] = []
 
         result = compiled_graph.invoke(state)
@@ -654,16 +648,14 @@ class TestGraphLevelE2E:
         assert result is not None
         assert not result.get("error"), "LLM ranking failure must not set error key"
 
-    def test_graph_node_sequence_dispatcher_research_guardrail_synthesis_followup(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_graph_node_sequence_dispatcher_research_guardrail_synthesis_followup(self, monkeypatch: pytest.MonkeyPatch, force_route: Callable[[str], None]) -> None:
         """For the research route the graph must execute the full canonical sequence."""
         from concierge.graph import compiled_graph
 
         self._setup_graph(monkeypatch, "graph-8-seq", _success_anthropic(_LLM_INDICES))
 
         state = _make_state("e2e-8-graph-seq")
-        state["route"] = "research"
+        force_route("research")
         state["rag_results"] = []
 
         result = compiled_graph.invoke(state)

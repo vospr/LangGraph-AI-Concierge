@@ -5,6 +5,9 @@ No API mocking at root level (per architecture decision: integration/conftest.py
 from pathlib import Path
 import pytest
 
+from collections.abc import Callable
+
+from concierge.agents.dispatcher import DispatcherAgent
 from concierge.state import initialize_state
 
 
@@ -39,3 +42,21 @@ def fresh_concierge_state() -> dict[str, object]:
             turn_id=0,
         )
     )
+
+
+@pytest.fixture
+def force_route(monkeypatch: pytest.MonkeyPatch) -> Callable[[str], None]:
+    """Make the dispatcher pick a given route, to test graph topology in isolation.
+
+    The dispatcher re-evaluates the route every turn, so a test can no longer
+    pre-set state["route"] to steer the graph.
+    """
+
+    def _force(route: str) -> None:
+        monkeypatch.setattr(
+            DispatcherAgent,
+            "_evaluate_stage1",
+            lambda self, text: ("forced", 1.0, route),
+        )
+
+    return _force
