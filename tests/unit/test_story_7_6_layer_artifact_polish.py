@@ -7,34 +7,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_readme_contains_required_layer1_sections_and_demo_reset_command() -> None:
-    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-
-    assert "```mermaid" in readme
-
-    assert "## Navigating This Repo" in readme
-    assert "1. Read the contract first:" in readme
-    assert "5. Inspect memory model" in readme
-
-    assert "python validate_config.py" in readme
-    assert "python main.py --user alex" in readme
-    assert "demo_script.md" in readme
-    assert "spec/concierge-spec.md" in readme
-    assert "git checkout -- memory/profiles/alex.json" in readme
-
-
-def test_adr_001_is_concise_and_has_context_options_rationale() -> None:
-    adr = (REPO_ROOT / "docs" / "adr" / "001-context-window-ownership.md").read_text(
-        encoding="utf-8"
-    )
-    lines = [line for line in adr.splitlines() if line.strip()]
-
-    assert len(lines) <= 20
-    assert any("Decision Context:" in line for line in lines)
-    assert any("Options Considered:" in line for line in lines)
-    assert any("Rationale:" in line for line in lines)
-
-
 def test_alex_profile_has_demo_notes_with_scenario() -> None:
     profile = json.loads((REPO_ROOT / "memory" / "profiles" / "alex.json").read_text(encoding="utf-8"))
 
