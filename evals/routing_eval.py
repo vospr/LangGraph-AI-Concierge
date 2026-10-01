@@ -33,10 +33,22 @@ from concierge.state import initialize_state  # noqa: E402
 LABELS_PATH = Path(__file__).with_name("routing_labels.yaml")
 RESULT_PATH = Path(__file__).parent / "results" / "routing_eval.json"
 ROUTES = ("rag", "research", "booking_stub", "fallback")
+# USD per million tokens (input, output), Anthropic list prices as of 2026-09.
+PRICES_PER_MTOK = {
+    "claude-opus-4-6": (5.0, 25.0),
+    "claude-haiku-4-5": (1.0, 5.0),
+}
 
 
 class LlmUnavailable(RuntimeError):
     """The rules+LLM arm needs ANTHROPIC_API_KEY; it is never silently skipped."""
+
+
+def load_env(path: Path = ROOT / ".env") -> None:
+    """Load the gitignored .env into this process only; never echoes values."""
+    from dotenv import load_dotenv
+
+    load_dotenv(path, override=False)
 
 
 @dataclass(frozen=True)
@@ -109,6 +121,17 @@ def run_arm(rows: list[Row], *, use_llm: bool) -> dict[str, Any]:
 
     setattr(agent, "_evaluate_stage2", counting_stage2)
 
+    tokens = {"input_tokens": 0, "output_tokens": 0}
+    real_extract = agent._extract_llm_text
+
+    def metering_extract(response: Any) -> str:
+        usage = getattr(response, "usage", None)
+        tokens["input_tokens"] += int(getattr(usage, "input_tokens", 0) or 0)
+        tokens["output_tokens"] += int(getattr(usage, "output_tokens", 0) or 0)
+        return real_extract(response)
+
+    setattr(agent, "_extract_llm_text", metering_extract)
+
     predicted: list[str] = []
     stage1_decided = 0
     with _env_key(use_llm), _quiet_trace():
@@ -126,6 +149,10 @@ def run_arm(rows: list[Row], *, use_llm: bool) -> dict[str, Any]:
         llm_calls=llm_calls,
         model=agent.dispatcher_model if use_llm else None,
     )
+    if use_llm:
+        in_price, out_price = PRICES_PER_MTOK[agent.dispatcher_model]
+        cost = (tokens["input_tokens"] * in_price + tokens["output_tokens"] * out_price) / 1e6
+        result["usage"] = {**tokens, "cost_usd": round(cost, 6)}
     return result
 
 
@@ -153,12 +180,22 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    if args.llm:
+        load_env()
     rows = load_labels()
     results = {"rules_only": run_arm(rows, use_llm=False)}
     if args.llm:
         results["rules_plus_llm"] = run_arm(rows, use_llm=True)
     print(_table(results))
     r = results["rules_only"]
+    if "rules_plus_llm" in results:
+        r2 = results["rules_plus_llm"]
+        u = r2["usage"]
+        print(
+            f"\nLLM stage: model={r2['model']} calls={r2['llm_calls']} "
+            f"input_tokens={u['input_tokens']} output_tokens={u['output_tokens']} "
+            f"cost=${u['cost_usd']:.4f}"
+        )
     print(f"\nstage-1 decided {r['stage1_decided']}/{r['n']} rows without an LLM")
     if args.write:
         RESULT_PATH.parent.mkdir(exist_ok=True)

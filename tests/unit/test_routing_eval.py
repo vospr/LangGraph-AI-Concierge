@@ -88,3 +88,64 @@ def test_llm_arm_calls_the_llm_only_for_rows_the_rules_do_not_decide(
     assert result["arm"] == "rules_plus_llm"
     assert len(calls) == result["llm_calls"] == result["n"] - rules["stage1_decided"]
     assert result["stage1_decided"] == rules["stage1_decided"]
+
+
+def _fake_anthropic(monkeypatch: pytest.MonkeyPatch, in_tok: int, out_tok: int) -> None:
+    class _Messages:
+        def create(self, **kwargs: Any) -> Any:
+            block = SimpleNamespace(text='{"intent":"out_of_domain","confidence":0.9}')
+            usage = SimpleNamespace(input_tokens=in_tok, output_tokens=out_tok)
+            return SimpleNamespace(content=[block], usage=usage)
+
+    fake = ModuleType("anthropic")
+    fake.Anthropic = lambda *a, **k: SimpleNamespace(messages=_Messages())  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "anthropic", fake)
+
+
+def test_llm_arm_logs_token_counts_and_cost_from_response_usage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy")
+    _fake_anthropic(monkeypatch, in_tok=1000, out_tok=20)
+    result = ev.run_arm(ev.load_labels(), use_llm=True)
+    n = result["llm_calls"]
+    assert n > 0
+    assert result["usage"]["input_tokens"] == 1000 * n
+    assert result["usage"]["output_tokens"] == 20 * n
+    in_price, out_price = ev.PRICES_PER_MTOK[result["model"]]
+    expected = (1000 * n * in_price + 20 * n * out_price) / 1_000_000
+    assert result["usage"]["cost_usd"] == pytest.approx(expected, abs=1e-6)
+
+
+def test_price_table_covers_the_dispatcher_model_and_the_haiku_fallback() -> None:
+    from concierge.agents.dispatcher import DispatcherAgent
+
+    assert DispatcherAgent().dispatcher_model in ev.PRICES_PER_MTOK
+    assert "claude-haiku-4-5" in ev.PRICES_PER_MTOK
+
+
+def test_env_file_is_loaded_into_this_process_only_when_the_llm_arm_is_asked_for(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    env = tmp_path / ".env"
+    env.write_text("ANTHROPIC_API_KEY=sk-ant-test-not-real\n", encoding="utf-8")
+    ev.load_env(env)
+    import os
+
+    assert os.environ["ANTHROPIC_API_KEY"] == "sk-ant-test-not-real"
+
+
+def test_result_file_and_report_never_contain_a_key(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    secret = "sk-ant-api03-SECRET-should-never-print"
+    monkeypatch.setenv("ANTHROPIC_API_KEY", secret)
+    _fake_anthropic(monkeypatch, in_tok=10, out_tok=5)
+    results = {
+        "rules_only": ev.run_arm(ev.load_labels(), use_llm=False),
+        "rules_plus_llm": ev.run_arm(ev.load_labels(), use_llm=True),
+    }
+    blob = json.dumps(results) + ev._table(results)
+    assert secret not in blob and "sk-ant" not in blob
+    assert "sk-ant" not in json.dumps(json.loads(ev.RESULT_PATH.read_text(encoding="utf-8")))
