@@ -1,0 +1,53 @@
+# Labelled utterances for the routing eval. `route` is the route a reasonable
+# concierge SHOULD pick, written from the route definitions in
+# prompts/dispatcher/v1.yaml and NOT from the regexes in config/routing_rules.yaml:
+#   rag          questions answerable from the mock destination file
+#   research     current / external information (trends, news, advisories, events)
+#   booking_stub requests to book, reserve, change or cancel
+#   fallback     out of domain, chit-chat, or too vague to route
+# Labels were written by an AI assistant and have not been independently reviewed.
+rows:
+  # --- rag (11)
+  - {text: "What resort in Bali has a spa?", route: rag}
+  - {text: "Which destinations in Southeast Asia do you offer?", route: rag}
+  - {text: "Tell me about Phuket", route: rag}
+  - {text: "Do you have any beach destinations?", route: rag}
+  - {text: "What are the average nightly prices in Koh Samui?", route: rag}
+  - {text: "Which of your destinations are good for diving?", route: rag}
+  - {text: "What amenities does the Alpine Vista property offer?", route: rag}
+  - {text: "Compare Bali and Phuket for a family", route: rag}
+  - {text: "I want a quiet island with snorkeling", route: rag}
+  - {text: "Is there a city destination on your list?", route: rag}
+  - {text: "What is the budget tier for the Maldives?", route: rag}
+  # --- research (10)
+  - {text: "What are the latest travel trends in Thailand?", route: research}
+  - {text: "Any news about flight prices to Asia?", route: research}
+  - {text: "What's popular for honeymoons right now?", route: research}
+  - {text: "Is November a good time to visit Bali?", route: research}
+  - {text: "What are travelers saying about Phuket this year?", route: research}
+  - {text: "Are there any travel advisories for Vietnam?", route: research}
+  - {text: "Which destinations are trending for 2027?", route: research}
+  - {text: "What is the current visa situation for Thailand?", route: research}
+  - {text: "Best new hotels opened in Bangkok recently", route: research}
+  - {text: "What events are on in Lisbon next month?", route: research}
+  # --- booking_stub (9)
+  - {text: "Book me a room in Bali", route: booking_stub}
+  - {text: "I'd like to reserve a villa for 3 nights", route: booking_stub}
+  - {text: "Can you make a reservation for next weekend?", route: booking_stub}
+  - {text: "Please book a flight to Phuket", route: booking_stub}
+  - {text: "I want to secure a room at the Alpine Vista", route: booking_stub}
+  - {text: "Cancel my booking", route: booking_stub}
+  - {text: "Change my reservation to Friday", route: booking_stub}
+  - {text: "Get me two nights in Koh Samui, I'm ready to pay", route: booking_stub}
+  - {text: "Hold a room for me in Tokyo", route: booking_stub}
+  # --- fallback (10)
+  - {text: "What's the weather in Zurich tomorrow?", route: fallback}
+  - {text: "Who will win the election?", route: fallback}
+  - {text: "What's the price of bitcoin?", route: fallback}
+  - {text: "Tell me a joke", route: fallback}
+  - {text: "hello", route: fallback}
+  - {text: "asdf", route: fallback}
+  - {text: "Write me a Python function to sort a list", route: fallback}
+  - {text: "Can you help me?", route: fallback}
+  - {text: "What is the meaning of life?", route: fallback}
+  - {text: "Should I invest in Tesla stock?", route: fallback}

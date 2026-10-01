@@ -3,6 +3,7 @@ Integration test conftest — autouse mock Anthropic client fixture.
 Real API calls are never made in pytest; use tests/manual/ for live API tests.
 """
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 

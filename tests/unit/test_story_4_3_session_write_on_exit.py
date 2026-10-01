@@ -70,7 +70,9 @@ def test_memory_service_session_write_uses_file_relative_paths_not_cwd(
     )
     assert written is not None
     assert written.exists()
-    assert str(written).endswith("memory\\sessions\\session-story-43-path\\state.json")
+    # path is relative to the source file, not the cwd, and OS-independent
+    assert written.parts[-4:] == ("memory", "sessions", "session-story-43-path", "state.json")
+    assert tmp_path not in written.parents
 
     if written.parent.exists():
         written.unlink(missing_ok=True)

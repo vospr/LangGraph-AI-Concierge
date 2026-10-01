@@ -6,7 +6,6 @@ from concierge.agents.dispatcher import DispatcherAgent
 from concierge.agents.guardrail import GuardrailAgent
 from concierge.state import initialize_state
 
-
 CLARIFICATION_QUESTION = (
     "Of course - are you looking to research a destination, check on a booking, or something else?"
 )

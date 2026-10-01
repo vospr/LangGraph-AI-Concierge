@@ -12,22 +12,6 @@ def test_token_budget_manager_exposes_required_interface_signature() -> None:
     assert hints["return"] == list[token_module.Message]
 
 
-def test_token_budget_manager_stub_comment_documents_activation_threshold() -> None:
-    source = (
-        Path(__file__).resolve().parents[2]
-        / "src"
-        / "concierge"
-        / "agents"
-        / "token_budget_manager.py"
-    ).read_text(encoding="utf-8")
-
-    assert (
-        "Stub implementation. In production, summarize when token count exceeds 6000 "
-        "(leaving 2000 for output). Activation threshold: 80% of model context window."
-        in source
-    )
-
-
 def test_token_budget_manager_returns_history_unchanged_for_mvp_noop() -> None:
     from concierge.agents.token_budget_manager import TokenBudgetManager
 

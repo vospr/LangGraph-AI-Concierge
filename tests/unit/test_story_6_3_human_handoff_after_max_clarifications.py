@@ -6,7 +6,6 @@ from concierge.agents.guardrail import CLARIFICATION_QUESTION, GuardrailAgent
 from concierge.graph import compiled_graph
 from concierge.state import initialize_state
 
-
 HANDOFF_MESSAGE = (
     "I'm having trouble understanding your request. "
     "A human travel specialist can assist - please wait or contact support."

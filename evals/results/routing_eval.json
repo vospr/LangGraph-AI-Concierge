@@ -1,0 +1,156 @@
+{
+  "rules_only": {
+    "arm": "rules_only",
+    "confusion": {
+      "booking_stub": {
+        "booking_stub": 6,
+        "fallback": 2,
+        "rag": 1
+      },
+      "fallback": {
+        "fallback": 10
+      },
+      "rag": {
+        "fallback": 9,
+        "rag": 2
+      },
+      "research": {
+        "fallback": 7,
+        "research": 3
+      }
+    },
+    "llm_calls": 0,
+    "model": null,
+    "n": 40,
+    "overall_accuracy": 0.525,
+    "per_route": {
+      "booking_stub": {
+        "accuracy": 0.6667,
+        "correct": 6,
+        "n": 9
+      },
+      "fallback": {
+        "accuracy": 1.0,
+        "correct": 10,
+        "n": 10
+      },
+      "rag": {
+        "accuracy": 0.1818,
+        "correct": 2,
+        "n": 11
+      },
+      "research": {
+        "accuracy": 0.3,
+        "correct": 3,
+        "n": 10
+      }
+    },
+    "stage1_decided": 12
+  },
+  "rules_plus_llm": {
+    "arm": "rules_plus_llm",
+    "confusion": {
+      "booking_stub": {
+        "booking_stub": 6,
+        "fallback": 2,
+        "rag": 1
+      },
+      "fallback": {
+        "fallback": 10
+      },
+      "rag": {
+        "fallback": 5,
+        "rag": 6
+      },
+      "research": {
+        "fallback": 7,
+        "research": 3
+      }
+    },
+    "llm_calls": 28,
+    "model": "claude-opus-4-6",
+    "n": 40,
+    "overall_accuracy": 0.625,
+    "per_route": {
+      "booking_stub": {
+        "accuracy": 0.6667,
+        "correct": 6,
+        "n": 9
+      },
+      "fallback": {
+        "accuracy": 1.0,
+        "correct": 10,
+        "n": 10
+      },
+      "rag": {
+        "accuracy": 0.5455,
+        "correct": 6,
+        "n": 11
+      },
+      "research": {
+        "accuracy": 0.3,
+        "correct": 3,
+        "n": 10
+      }
+    },
+    "stage1_decided": 12,
+    "usage": {
+      "cost_usd": 0.03758,
+      "input_tokens": 4411,
+      "output_tokens": 621
+    }
+  },
+  "rules_plus_llm_haiku": {
+    "arm": "rules_plus_llm",
+    "confusion": {
+      "booking_stub": {
+        "booking_stub": 6,
+        "fallback": 2,
+        "rag": 1
+      },
+      "fallback": {
+        "fallback": 10
+      },
+      "rag": {
+        "fallback": 4,
+        "rag": 7
+      },
+      "research": {
+        "fallback": 7,
+        "research": 3
+      }
+    },
+    "llm_calls": 28,
+    "model": "claude-haiku-4-5",
+    "n": 40,
+    "overall_accuracy": 0.65,
+    "per_route": {
+      "booking_stub": {
+        "accuracy": 0.6667,
+        "correct": 6,
+        "n": 9
+      },
+      "fallback": {
+        "accuracy": 1.0,
+        "correct": 10,
+        "n": 10
+      },
+      "rag": {
+        "accuracy": 0.6364,
+        "correct": 7,
+        "n": 11
+      },
+      "research": {
+        "accuracy": 0.3,
+        "correct": 3,
+        "n": 10
+      }
+    },
+    "stage1_decided": 12,
+    "usage": {
+      "cost_usd": 0.011508,
+      "input_tokens": 4383,
+      "output_tokens": 1425
+    }
+  }
+}

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Literal
-from typing_extensions import NotRequired, TypedDict
+from typing import Any, NotRequired
+
+from typing_extensions import TypedDict
 
 
 class ConciergeState(TypedDict):
@@ -16,7 +17,7 @@ class ConciergeState(TypedDict):
     current_response: str
     intent: str | None
     confidence: float | None
-    route: Literal["rag", "research", "booking_stub", "fallback"] | None
+    route: str | None
     rag_results: list[dict[str, Any]] | None
     research_results: list[dict[str, Any]] | None
     source_attribution: list[str]
@@ -30,6 +31,38 @@ class ConciergeState(TypedDict):
     error: str | None
     # Internal graph-tracking field used by tests to verify node execution order.
     _executed_nodes: NotRequired[list[str]]
+    max_clarifications: NotRequired[int]
+
+
+class StateUpdate(TypedDict, total=False):
+    """A node's partial update: any subset of ConciergeState fields.
+
+    `current_response` is Any because the booking agent hands a response object to
+    synthesis, which turns it into text.
+    """
+
+    user_id: str
+    session_id: str
+    turn_id: int
+    conversation_history: list[dict[str, Any]]
+    current_input: str
+    current_response: Any
+    intent: str | None
+    confidence: float | None
+    route: str | None
+    rag_results: list[dict[str, Any]] | None
+    research_results: list[dict[str, Any]] | None
+    source_attribution: list[str]
+    memory_profile: dict[str, Any] | None
+    degradation_label: str | None
+    guardrail_passed: bool
+    proactive_suggestion: str | None
+    clarification_needed: bool
+    clarification_question: str | None
+    human_handoff: bool
+    error: str | None
+    _executed_nodes: list[str]
+    max_clarifications: int
 
 
 class TurnResetUpdate(TypedDict):

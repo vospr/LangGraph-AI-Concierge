@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Hashable
 from copy import deepcopy
-from typing import Any
+from typing import Any, cast
 
 from concierge.nodes.booking_node import booking_node
 from concierge.nodes.dispatcher_node import dispatcher_node
@@ -11,7 +12,6 @@ from concierge.nodes.rag_node import rag_node
 from concierge.nodes.research_node import research_node
 from concierge.nodes.synthesis_node import synthesis_node
 from concierge.state import ConciergeState, NodeName
-
 
 NODE_FUNCTIONS = {
     NodeName.DISPATCHER: dispatcher_node,
@@ -41,7 +41,7 @@ GRAPH_EDGES = (
     (NodeName.FOLLOWUP, "__end__"),
 )
 
-CONDITIONAL_EDGES = {
+CONDITIONAL_EDGES: dict[str, dict[Hashable, str]] = {
     NodeName.DISPATCHER: {
         "rag": NodeName.RAG,
         "research": NodeName.RESEARCH,
@@ -100,7 +100,7 @@ class _CompiledGraphAdapter:
         self._compiled = compiled
 
     def invoke(self, state: ConciergeState) -> ConciergeState:
-        return self._compiled.invoke(deepcopy(state))
+        return cast(ConciergeState, self._compiled.invoke(deepcopy(state)))
 
 
 def _track_node_execution(node_name: str, fn: Any) -> Any:

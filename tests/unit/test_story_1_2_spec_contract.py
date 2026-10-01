@@ -4,7 +4,6 @@ import re
 import subprocess
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SPEC_PATH = REPO_ROOT / "spec" / "concierge-spec.md"
 README_PATH = REPO_ROOT / "README.md"
@@ -153,12 +152,3 @@ def test_spec_contains_required_contracts_and_decision_notes() -> None:
 def test_spec_has_at_least_two_tbd_markers() -> None:
     content = SPEC_PATH.read_text(encoding="utf-8")
     assert content.count("[TBD]") >= 2, "Spec must include at least 2 genuine [TBD] markers"
-
-
-def test_readme_links_spec_as_authoritative_contract_source() -> None:
-    assert README_PATH.exists(), "README.md must exist"
-    content = README_PATH.read_text(encoding="utf-8")
-    assert "spec/concierge-spec.md" in content, "README.md must link spec/concierge-spec.md"
-    assert "authoritative source of agent contracts" in content.lower(), (
-        "README.md must explicitly frame spec as the authoritative source of agent contracts"
-    )

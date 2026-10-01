@@ -28,8 +28,14 @@ addopts = "-v --tb=short --strict-markers"
 
 [tool.mypy]
 python_version = "3.11"
+# Strict typing covers the shipped code and the eval harness. tests/ is excluded:
+# under strict it reports 77 errors, 47 of them unannotated test functions.
+files = ["src", "main.py", "evals", "validate_config.py"]
 strict = true
 ignore_missing_imports = true
+# types-PyYAML is not a dependency; PyYAML is only used to load config files.
+disable_error_code = ["import-untyped"]
+
 
 [tool.ruff]
 line-length = 100
@@ -37,6 +43,11 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests keep long assertion messages and string fixtures on one line; wrapping them
+# hides the text being asserted. Source files stay under the 100-column limit.
+"tests/**" = ["E501"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/concierge"]

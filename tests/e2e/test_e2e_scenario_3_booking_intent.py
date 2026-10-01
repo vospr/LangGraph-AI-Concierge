@@ -20,7 +20,6 @@ Coverage:
 """
 from __future__ import annotations
 
-import re
 from typing import Any
 
 import pytest
@@ -30,7 +29,6 @@ from concierge.agents.dispatcher import DispatcherAgent
 from concierge.agents.response_synthesis import ResponseSynthesisAgent
 from concierge.graph import compiled_graph
 from concierge.state import NodeName, initialize_state
-
 
 # ---------------------------------------------------------------------------
 # Constants mirrored from production code — kept here so a drift in source
@@ -663,42 +661,17 @@ class TestE2EScenario3BookingIntent:
 
 
 # ===========================================================================
-# Part 5 — Regression: route pre-set skips dispatcher re-evaluation
+# Part 5 — Route is re-evaluated every turn (a route left over from the
+# previous turn must never be reused)
 # ===========================================================================
 
 
-class TestDispatcherSkipsWhenRouteAlreadySet:
-    """If route is already set in state, dispatcher must not re-evaluate."""
-
-    def test_dispatcher_is_no_op_when_route_pre_set(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """DispatcherAgent.run() must return {} when state already has a non-empty route."""
-        stage1_called = []
-
-        monkeypatch.setattr(
-            DispatcherAgent,
-            "_evaluate_stage1",
-            lambda self, text: stage1_called.append(text) or (None, 0.0, None),
-        )
-
+class TestRouteIsResetEveryTurn:
+    def test_stale_route_from_previous_turn_is_overwritten(self) -> None:
         state = _make_state()
-        state["route"] = "booking_stub"   # pre-set to simulate graph re-entry
-
-        update = DispatcherAgent().run(state)
-
-        assert update == {}, (
-            "Dispatcher must return empty dict when route is already set"
-        )
-        assert stage1_called == [], "Stage-1 must not be called when route is pre-set"
-
-    def test_graph_with_pre_set_booking_stub_route_skips_dispatcher_routing(self) -> None:
-        """Graph invocation with route='booking_stub' pre-set must bypass Stage-1 evaluation."""
-        state = _make_state()
-        state["route"] = "booking_stub"
+        state["route"] = "rag"  # left over from a previous turn
 
         result = compiled_graph.invoke(state)
 
         assert result["route"] == "booking_stub"
         assert "Booking is not available" in result["current_response"]
-        assert result.get("error") is None

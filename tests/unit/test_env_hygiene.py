@@ -5,7 +5,6 @@ AC4: .env.example documents ANTHROPIC_API_KEY without a value; no committed .env
 import subprocess
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).parent.parent.parent
 
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 from typing import Any, TextIO
 
-
 TRACE_ALLOWLIST = {
     "intent",
     "confidence",

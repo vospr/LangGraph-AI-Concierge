@@ -5,7 +5,7 @@ A LangGraph-based multi-agent AI Concierge built on spec-first engineering princ
 ```mermaid
 flowchart LR
     U[User] --> D[Dispatcher]
-    D -->|property_lookup| RAG[RAG Agent]
+    D -->|property_lookup| RAG[KB Lookup - keyword search over mock data]
     D -->|destination_research| RES[Research Agent]
     D -->|booking_intent| BK[Booking Stub]
     D -->|out_of_domain / fallback| G[Guardrail]
@@ -33,7 +33,7 @@ flowchart LR
   - [Memory Architecture](#memory-architecture)
   - [Observability & Tracing](#observability--tracing)
 - [Testing](#testing)
-- [Architecture Decision Records](#architecture-decision-records)
+- [Routing Eval](#routing-eval)
 - [Navigating This Repo](#navigating-this-repo)
 
 ---
@@ -42,6 +42,7 @@ flowchart LR
 
 This is a 5-day MVP demonstrating:
 
+- **Keyword lookup over mock data, not RAG** — the `rag` route (a legacy name) does case-insensitive keyword matching over 6 hand-written destinations in `agents/kb/knowledge_base.json`. There are no embeddings, no vector store and no retrieval pipeline; `MockKnowledgeBase` marks where a real knowledge base would be swapped in
 - **Spec-driven multi-agent engineering** — `spec/concierge-spec.md` committed before any runtime code
 - **Hybrid dispatcher routing** — deterministic Stage 1 rules + LLM Stage 2 escalation with confidence scores
 - **Per-agent model policy** — each agent declares its own Claude model via `prompts/{agent}/policy.yaml`
@@ -70,10 +71,10 @@ This is a 5-day MVP demonstrating:
 
 | Agent | Normal mode | Fast mode (`--fast-mode`) |
 |---|---|---|
-| Dispatcher | claude-opus-4-6 | claude-haiku-4-5 |
+| Dispatcher | claude-haiku-4-5 | claude-haiku-4-5 |
 | Research Agent | claude-sonnet-4-6 | claude-haiku-4-5 |
 | Response Synthesis | claude-sonnet-4-6 | claude-haiku-4-5 |
-| RAG Agent | claude-haiku-4-5 | claude-haiku-4-5 |
+| KB Lookup agent (`rag` route) | claude-haiku-4-5 | claude-haiku-4-5 |
 | Guardrail | claude-haiku-4-5 | claude-haiku-4-5 |
 | Follow-up | claude-haiku-4-5 | claude-haiku-4-5 |
 
@@ -110,7 +111,7 @@ LangGraph-AI-Concierge/
 │   ├── graph/__init__.py           # StateGraph topology, conditional edges, compilation
 │   ├── agents/
 │   │   ├── dispatcher.py           # Hybrid Stage 1 + Stage 2 routing
-│   │   ├── rag_agent.py            # KB retrieval (+ optional LLM ranking)
+│   │   ├── rag_agent.py            # Keyword lookup over the mock KB (+ optional LLM ranking)
 │   │   ├── research_agent.py       # DuckDuckGo web search (+ optional LLM ranking)
 │   │   ├── response_synthesis.py   # Blended output with inline source attribution
 │   │   ├── guardrail.py            # Confidence gate, out-of-domain, clarification, handoff
@@ -128,19 +129,10 @@ LangGraph-AI-Concierge/
 │   ├── profiles/alex.json          # Demo user profile (past trips, preferences, cached research)
 │   └── sessions/                   # Write-once session state (git-excluded)
 │
-├── docs/
-│   ├── adr/
-│   │   ├── 001-context-window-ownership.md
-│   │   ├── 002-multi-model-strategy.md
-│   │   ├── 003-anthropic-only-mvp.md
-│   │   ├── 004-file-based-memory.md
-│   │   └── 005-langgraph-framework-selection.md
-│   └── CLAUDE_langgraph.md         # LangGraph spec compliance guide
-│
 ├── tests/
-│   ├── unit/                       # 46 story-driven unit tests
-│   ├── e2e/                        # 8 end-to-end scenario tests
-│   └── integration/                # Integration fixtures (mocks Anthropic client)
+│   ├── unit/                       # 198 tests
+│   ├── e2e/                        # 296 tests (graph runs with LLM and web search stubbed)
+│   └── integration/                # conftest only, no tests
 │
 └── demo_script.md                  # 5 pre-validated queries with expected routing paths
 ```
@@ -265,11 +257,11 @@ Every turn emits exactly one routing decision trace: `[dispatcher] intent=... co
 
 | Agent | Route | Description |
 |---|---|---|
-| **RAG Agent** | `rag` | Keyword-searches `agents/kb/knowledge_base.json` for the current user input. Optional LLM ranking pass (set `RAG_AGENT_LLM_RANKING=1`). Returns structured destination entries with `[RAG]` attribution. |
+| **KB Lookup agent** | `rag` | Keyword-searches `agents/kb/knowledge_base.json` for the current user input. Optional LLM ranking pass (set `RAG_AGENT_LLM_RANKING=1`). Returns structured destination entries tagged `[RAG]` (a legacy label; the lookup is not RAG). |
 | **Research Agent** | `research` | Queries DuckDuckGo (up to 5 results) scoped to current input + last 3 turns. Degrades gracefully when search unavailable — labels response `[WEB SEARCH UNAVAILABLE — serving from internal KB only]`. |
 | **Booking Stub** | `booking_stub` | Integration contract placeholder. Returns unavailability status with required env vars (`BOOKING_API_KEY`, `BOOKING_REGION`) and swap point for `BedrockBookingAPI`. |
 | **Guardrail** | all paths | Confidence threshold gate (default 0.75). Issues clarifying questions on ambiguous intents, deflects out-of-domain queries, escalates to human handoff after max clarification attempts. |
-| **Response Synthesis** | all paths | Blends RAG and Research results into a cohesive response with inline `[RAG]` / `[Web]` source attribution. Filters `system_summary` messages from conversation history. |
+| **Response Synthesis** | all paths | Blends KB-lookup and Research results into a cohesive response with inline `[RAG]` / `[Web]` source attribution. Filters `system_summary` messages from conversation history. |
 | **Follow-up** | `research` only | Conditional node — fires only on the research route. Generates proactive next-step suggestions appended to the synthesized response. |
 
 ### Memory Architecture
@@ -318,26 +310,21 @@ The centralized `trace()` function enforces an explicit **allowlist** (intent, c
 ## Testing
 
 ```bash
-# Run all tests
-pytest
-
-# Unit tests only
-pytest tests/unit/
-
-# E2E tests (requires ANTHROPIC_API_KEY)
-pytest tests/e2e/
-
-# Skip API probe for offline testing
-SKIP_API_PROBE=1 pytest
+uv sync --extra dev
+uv run ruff check .      # lint (E, F, I, UP)
+uv run mypy              # strict, on src/, main.py, evals/, validate_config.py
+uv run pytest            # 497 tests, offline, ~3 s
 ```
+
+CI (`.github/workflows/ci.yml`) runs the same three commands on Python 3.11 and 3.12. It has not run on GitHub yet: the branch is not pushed. Both versions were run locally with the same three commands.
 
 ### Test coverage
 
-| Category | Count | What it covers |
-|---|---|---|
-| Unit tests | 46 | Story-driven acceptance tests per epic, config contracts, YAML schemas, state reset, trace allowlist/denylist, routing logic, memory service, guardrail thresholds, token budget |
-| E2E tests | 8 | Full graph invocation: trend research, booking intent, LLM escalation, out-of-domain deflection, human handoff, session persistence, LLM ranking, no-API-key degradation |
-| Integration | fixtures | Auto-applied `mock_anthropic_client` prevents real API calls in all non-E2E tests |
+497 tests collected, 0 skipped: 198 in `tests/unit/`, 296 in `tests/e2e/` (many are parametrised, so this is far more than the 9 files), 3 in `tests/`.
+
+Every test runs offline. An autouse fixture in `tests/conftest.py` makes web search raise and removes `ANTHROPIC_API_KEY`; `tests/unit/test_suite_is_offline.py` checks both. No test calls the Claude API: LLM calls are faked where a test needs one. So the suite shows the graph, routing rules, state handling and degradation paths work; it does not measure answer quality.
+
+Tests that only checked a comment's wording were deleted rather than kept to inflate the count (4 so far, plus 6 earlier for a removed docs layout).
 
 ### Key test patterns
 
@@ -348,17 +335,32 @@ SKIP_API_PROBE=1 pytest
 
 ---
 
-## Architecture Decision Records
+## Routing Eval
 
-Five concise ADRs (each ≤20 lines) in `docs/adr/`:
+`evals/routing_labels.yaml` holds 40 labelled utterances (11 `rag`, 10 `research`, 9 `booking_stub`, 10 `fallback`). `evals/routing_eval.py` drives the real `DispatcherAgent.run()` and scores the route it picks. Results are in `evals/results/routing_eval.json`; the rules-only arm is re-checked against it by a test.
 
-| ADR | Decision | Rationale |
-|---|---|---|
-| [001](docs/adr/001-context-window-ownership.md) | Dispatcher owns full conversation history | Centralises turn state, prevents cross-agent bleed, keeps routing deterministic |
-| [002](docs/adr/002-multi-model-strategy.md) | Per-agent model policy via `AgentPolicy.model` | Balances cost/speed/quality; `--fast-mode` overrides without code changes |
-| [003](docs/adr/003-anthropic-only-mvp.md) | Single-provider Anthropic for MVP | Reduces failure surface, simplifies validation, one credential needed |
-| [004](docs/adr/004-file-based-memory.md) | Local JSON files for memory | Zero infrastructure, git-inspectable, transparent for demo; clear upgrade path to DynamoDB/Bedrock Sessions |
-| [005](docs/adr/005-langgraph-framework-selection.md) | LangGraph 1.0 StateGraph | Native graph composition, typed state contracts, clean node boundaries |
+```bash
+uv run python -m evals.routing_eval --write         # rules-only
+uv run python -m evals.routing_eval --llm --write   # also rules+LLM with claude-opus-4-6 (reads ANTHROPIC_API_KEY from the gitignored .env)
+uv run python -m evals.routing_eval --only-model claude-haiku-4-5 --write   # run one arm and merge it into the results file
+```
+
+| Route | Rules only | Rules + Opus 4.6 | Rules + Haiku 4.5 |
+|---|---|---|---|
+| `rag` | 18% (2/11) | 55% (6/11) | 64% (7/11) |
+| `research` | 30% (3/10) | 30% (3/10) | 30% (3/10) |
+| `booking_stub` | 67% (6/9) | 67% (6/9) | 67% (6/9) |
+| `fallback` | 100% (10/10) | 100% (10/10) | 100% (10/10) |
+| **Overall** | **52% (21/40)** | **62% (25/40)** | **65% (26/40)** |
+
+- LLM stage, one run per model on the same 40 rows (the rules decide 12; the LLM sees the other 28):
+  - `claude-opus-4-6` (ID still valid; selectable by setting `model` in `prompts/dispatcher/policy.yaml`): 28 calls, 4,411 input / 621 output tokens, about $0.038 at list price.
+  - `claude-haiku-4-5` (now the router default in `prompts/dispatcher/policy.yaml`): 28 calls, 4,383 input / 1,425 output tokens, about $0.012.
+  - Haiku scores one row higher (a `rag` row) at about a third of the cost. One row on one run is noise, so read it as "no measurable gain from the bigger model on this set", not "Haiku is better".
+- **Router default:** the dispatcher now uses `claude-haiku-4-5`. On this set it matched Opus 4.6 (65% vs 62%, one row) at about a third of the cost; that is one run on 40 rows, so the reason for the switch is "no measurable gain from the bigger model", not "Haiku is better". To go back, set `model: claude-opus-4-6` in `prompts/dispatcher/policy.yaml`; nothing else changes (`tests/unit/test_dispatcher_model_default.py`).
+- `fallback` is 100% in every arm because a turn nobody decides falls through to it, which says nothing about the LLM.
+- With either LLM on, 7 of 10 `research` and 5 of 11 `rag` utterances still end in `fallback` (see `confusion` in the JSON). Why was not investigated, and the rules and the 0.75 confidence threshold have not been tuned against this set.
+- Limits: 40 rows labelled in one pass, one run per model, no repeat to measure LLM variance, and no check for overlap between the utterances and the dispatcher's prompt examples. Treat the gap between rules-only and rules+LLM as indicative, not a benchmark.
 
 ---
 
@@ -368,6 +370,5 @@ Five concise ADRs (each ≤20 lines) in `docs/adr/`:
 2. **Validate the environment:** `python validate_config.py` — 11 pre-flight checks before any LLM call.
 3. **Run the demo:** Follow [`demo_script.md`](demo_script.md) — 5 queries covering all routing paths.
 4. **Inspect routing and prompt config:** `config/routing_rules.yaml` and `prompts/*/policy.yaml`.
-5. **Review implementation stories:** `_documentation/implementation-artifacts/` — 43 stories across 7 epics.
+5. **Planning history:** `_documentation/` holds the original planning artifacts.
 6. **Explore memory:** `memory/README.md` and baseline profile `memory/profiles/alex.json`.
-7. **Understand trade-offs:** `docs/adr/001-005` — five architectural decisions with context and rationale.

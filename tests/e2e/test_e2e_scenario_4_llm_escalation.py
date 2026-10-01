@@ -39,7 +39,6 @@ import sys
 import types
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -48,7 +47,6 @@ from concierge.agents.dispatcher import DispatcherAgent
 from concierge.agents.guardrail import CLARIFICATION_QUESTION, GuardrailAgent
 from concierge.graph import build_graph
 from concierge.state import initialize_state
-
 
 # ---------------------------------------------------------------------------
 # Constants pinned from config files so the test fails loudly if config drifts
@@ -217,8 +215,8 @@ class TestStage2LLMEscalation:
 
         kwargs = self._recorder["last_kwargs"]
         assert kwargs is not None
-        # model must match dispatcher/policy.yaml (claude-opus-4-6 when FAST_MODE is off)
-        assert kwargs["model"] == "claude-opus-4-6", (
+        # model must match dispatcher/policy.yaml (claude-haiku-4-5)
+        assert kwargs["model"] == "claude-haiku-4-5", (
             f"Stage 2 must use dispatcher model, got {kwargs['model']!r}"
         )
         # max_tokens must match dispatcher/policy.yaml

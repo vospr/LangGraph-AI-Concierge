@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from concierge.state import ConciergeState
+from concierge.state import ConciergeState, StateUpdate
 from concierge.trace import trace
-
 
 FOLLOWUP_SUGGESTION = (
     "Based on your interest in Southeast Asia, you might also want to explore mountain retreats. "
@@ -11,7 +10,7 @@ FOLLOWUP_SUGGESTION = (
 
 
 class FollowUpAgent:
-    def run(self, state: ConciergeState) -> ConciergeState:
+    def run(self, state: ConciergeState) -> StateUpdate:
         if str(state.get("route") or "") != "research":
             return {}
         if bool(state.get("human_handoff")):

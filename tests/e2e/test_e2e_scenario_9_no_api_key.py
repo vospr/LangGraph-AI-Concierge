@@ -278,7 +278,6 @@ class TestRAGAgentWithoutApiKey:
         mock_anthropic = MagicMock()
         monkeypatch.setitem(sys.modules, "anthropic", mock_anthropic)
 
-        state = _make_state("e2e-s9-rag-ranking-skip", STRONG_INPUT)
         agent = RAGAgent()
 
         sample_results = [

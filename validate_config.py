@@ -10,7 +10,6 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-
 AGENTS = (
     "dispatcher",
     "rag_agent",

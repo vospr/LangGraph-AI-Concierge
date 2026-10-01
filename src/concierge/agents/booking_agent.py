@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import BaseModel
 
-from concierge.state import ConciergeState
+from concierge.state import ConciergeState, StateUpdate
 from concierge.trace import trace
 
 
@@ -16,7 +14,7 @@ class BookingAgentResponse(BaseModel):
 
 
 class BookingAgent:
-    def run(self, state: ConciergeState) -> ConciergeState:
+    def run(self, state: ConciergeState) -> StateUpdate:
         del state
         trace("booking_agent", event="unavailable", message="stub_integration_contract")
         response = BookingAgentResponse(

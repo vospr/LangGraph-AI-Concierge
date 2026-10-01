@@ -2,7 +2,6 @@ from pathlib import Path
 
 import yaml
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ROUTING_RULES_PATH = REPO_ROOT / "config" / "routing_rules.yaml"
 PROMPTS_DIR = REPO_ROOT / "prompts"

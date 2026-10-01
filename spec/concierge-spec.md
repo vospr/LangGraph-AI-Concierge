@@ -171,7 +171,7 @@ class AgentPolicy(BaseModel):
 
 | Agent | Model | Rationale |
 |-------|-------|-----------|
-| Dispatcher | `claude-opus-4-6` | Complex intent classification; full conversation context |
+| Dispatcher | `claude-haiku-4-5` | Intent classification; full conversation context. Defaulted to Haiku after a 40-row eval showed no gain from `claude-opus-4-6` (see README, Routing Eval); Opus stays selectable in `prompts/dispatcher/policy.yaml` |
 | Research Agent | `claude-sonnet-4-6` | Multi-step reasoning over web results |
 | Response Synthesis | `claude-sonnet-4-6` | Blended source attribution requires coherent reasoning |
 | RAG Agent | `claude-haiku-4-5-20251001` | Fast retrieval formatting from structured KB |

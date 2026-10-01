@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 
 from concierge.graph import compiled_graph
 from concierge.state import initialize_state
-
 
 FOLLOWUP_SUGGESTION = (
     "Based on your interest in Southeast Asia, you might also want to explore mountain retreats. "
@@ -40,13 +40,14 @@ def test_followup_agent_generates_suggestion_and_trace_for_research_route(
 
 def test_graph_runs_followup_only_for_research_route(
     monkeypatch: pytest.MonkeyPatch,
+    force_route: Callable[[str], None],
 ) -> None:
     from concierge.agents import research_agent as research_module
 
     monkeypatch.setattr(research_module, "search_duckduckgo", lambda query, max_results=5: [])
 
     research = initialize_state("alex", "session-6-5-research", "hello", turn_id=1)
-    research["route"] = "research"
+    force_route("research")
     research_result = compiled_graph.invoke(research)
     assert research_result.get("_executed_nodes") == [
         "dispatcher",
@@ -58,7 +59,7 @@ def test_graph_runs_followup_only_for_research_route(
     assert research_result.get("proactive_suggestion") == FOLLOWUP_SUGGESTION
 
     rag = initialize_state("alex", "session-6-5-rag", "hello", turn_id=2)
-    rag["route"] = "rag"
+    force_route("rag")
     rag_result = compiled_graph.invoke(rag)
     assert rag_result.get("_executed_nodes") == [
         "dispatcher",
@@ -69,7 +70,7 @@ def test_graph_runs_followup_only_for_research_route(
     assert rag_result.get("proactive_suggestion") is None
 
     booking = initialize_state("alex", "session-6-5-booking", "hello", turn_id=3)
-    booking["route"] = "booking_stub"
+    force_route("booking_stub")
     booking_result = compiled_graph.invoke(booking)
     assert booking_result.get("_executed_nodes") == [
         "dispatcher",

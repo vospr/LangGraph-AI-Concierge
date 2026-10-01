@@ -54,7 +54,7 @@ def test_stage2_uses_llm_model_and_routes_when_confidence_high(monkeypatch) -> N
     update = DispatcherAgent().run(state)
 
     create_kwargs = recorder["kwargs"]
-    assert create_kwargs["model"] == "claude-opus-4-6"
+    assert create_kwargs["model"] == "claude-haiku-4-5"
     assert create_kwargs["max_tokens"] == 128
     assert update["intent"] == "destination_research"
     assert update["confidence"] == 0.84

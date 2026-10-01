@@ -34,7 +34,6 @@ import yaml
 from concierge.agents.dispatcher import DispatcherAgent
 from concierge.agents.guardrail import (
     OUT_OF_DOMAIN_CONFIDENCE_MAX,
-    OUT_OF_DOMAIN_DEFLECTION_TEMPLATE,
     GuardrailAgent,
 )
 from concierge.graph import compiled_graph
