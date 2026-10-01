@@ -1,0 +1,60 @@
+# Secrets — NEVER commit
+.env
+
+# Runtime-generated memory files — never commit session files
+# Note: no leading slash for Windows git compatibility (FM7)
+# Ignore all session subdirectories (files live at memory/sessions/{id}/state.json)
+memory/sessions/*/
+!memory/sessions/.gitkeep
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Test and tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Node (if applicable)
+node_modules/
+
+# uv — lock file is COMMITTED, do NOT add uv.lock here
+
+# Dev tooling (BMAD, Claude Code config) — not part of project code
+_bmad/
+_bmad-output/
+.agents/
+.claude/
+docs/
+
